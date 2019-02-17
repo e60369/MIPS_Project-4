@@ -1,0 +1,67 @@
+asm_file_trap:
+	# If your program ends up in this loop then your ISR is not being exited correctly
+	lui $s0, 0xf0a0
+	li $t0, 0x86afafff 	# "Err" on seven segment
+	sw $t0, 0($s0)
+	j asm_file_trap
+	nop
+
+sseg_display:
+
+	move $t1, $a0
+	move $t3, $0
+
+	# Position 0
+	andi $t2, $t1, 0xf
+	sll $t2, $t2, 2
+	addu $t2, $t2, $s0	# Calculate LUT address
+	lw $t2, 0($t2)
+	or $t3, $t3, $t2
+	
+	# Position 1
+	andi $t2, $t1, 0xf0
+	srl $t2, $t2, 2
+	addu $t2, $t2, $s0	# Calculate LUT address
+	lw $t2, 0($t2)
+	sll $t2, $t2, 8
+	or $t3, $t3, $t2
+
+	# Position 2
+	andi $t2, $t1, 0xf00
+	srl $t2, $t2, 6
+	addu $t2, $t2, $s0	# Calculate LUT address
+	lw $t2, 0($t2)
+	sll $t2, $t2, 16
+	or $t3, $t3, $t2
+
+	# Position 3
+	andi $t2, $t1, 0xf000
+	srl $t2, $t2, 10
+	addu $t2, $t2, $s0	# Calculate LUT address
+	lw $t2, 0($t2)
+	sll $t2, $t2, 24
+	or $t3, $t3, $t2
+
+	# Write to seven segment and increment
+	jr $ra
+	sw $t3, 0($s2)
+
+
+# Seven segment display lookup table
+sseg_lut:
+	.word 	0xc0	# 0
+	.word	0xf9	# 1
+	.word	0xa4	# 2
+	.word	0xb0	# 3
+	.word	0x99	# 4
+	.word	0x92	# 5
+	.word	0x82	# 6
+	.word	0xf8	# 7
+	.word	0x80	# 8
+	.word	0x90	# 9
+	.word	0x88	# a
+	.word	0x83	# b
+	.word	0xc6	# c
+	.word	0xa1	# d
+	.word	0x86	# e
+	.word	0x8e	# f

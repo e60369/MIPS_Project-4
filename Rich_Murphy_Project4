@@ -1,0 +1,48 @@
+.org 0x10000000
+
+li $sp, 0x10fffffc	# Stack pointer initialization
+li $s0, sseg_lut	# Lookup table address used by sseg_display
+lui $s1, 0xf070	# Assign Interrupt controller to register $s1
+lui $s2, 0xf0a0	# Assign Seven segment display to register $s2
+lui $s3, 0xf060 	# Assign the timer to register $s3
+lui $s4, 0xf020	# Assign the LEDs to register $s4
+li $s5, 0xffffff63	# This value is 156 less than the max value of the timer
+li $s6, 0x00000003	# This is the value that needs to be written to $s1 to enable timer interupts.
+li $s7, 0x000000ff	# This value represents all the LEDs being turned on.
+li $iv, isr_label	# Assign register $iv to my ISR label
+sw $s5, 0($s3)	# Stores the value from $s6 into the timer.
+
+# ****************************
+# TODO: enable interrupts below
+# ****************************
+
+sw $s6, 0($s1) # Write 0b0011 to mask register to enable global and timer interupts.
+
+# NOTE: Do not add or modify any code within this main loop
+main:
+	jal sseg_display
+	nop
+	addiu $a0, $a0, 1
+	j main
+	nop
+
+# ****************************************
+# TODO: add interrupt service routine below
+# ****************************************
+isr_label:
+
+	lw $t4, 0($s4) # Load value of LEDs into temporary register.
+	beq $0, $t4, Turn_On # If LEDs are off, turn them on.
+	sw $0, 0($s4) # Else, turn them off.
+	
+	Reset:
+	sw $s5, 0($s3) # Reset the clock to our chosen value.
+	sw $0, 4($s1)  # Clear the interrupt in the status register.
+	jr $ir # Jump back to where the program left off.
+	sw $s6, 0($s1) # Re-enable global and timer interupts in branch delay slot prior to exit.
+
+	Turn_On:
+	sw $s7, 0($s4) # Turn the LEDs on.
+	j Reset # Jump to reset everything and exit.
+	nop
+
